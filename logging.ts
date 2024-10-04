@@ -5,8 +5,8 @@ await configure({
     console: getConsoleSink(),
   },
   loggers: [
-    { category: "bench", sinks: ["console"], level: "debug" },
-    { category: "fedify", sinks: ["console"], level: "info" },
+    { category: "bench", sinks: ["console"], level: "info" },
+    { category: "fedify", sinks: ["console"], level: "warning" },
     { category: ["fedify", "federation", "actor"], sinks: [], level: "error" },
     { category: ["logtape", "meta"], sinks: ["console"], level: "warning" },
   ],

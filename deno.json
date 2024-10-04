@@ -8,11 +8,14 @@
     "@std/async": "jsr:@std/async@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.4",
     "ioredis": "npm:ioredis@^5.4.1",
-    "markdown-table": "https://esm.sh/markdown-table@3",
+    "markdown-table": "https://esm.sh/markdown-table@3.0.3",
     "postgres": "npm:postgres@^3.4.4"
   },
   "unstable": [
     "kv",
     "temporal"
-  ]
+  ],
+  "tasks": {
+    "bench": "deno run --allow-all benchmark.ts"
+  }
 }

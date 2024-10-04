@@ -19,15 +19,16 @@ const activity = new Create({
   }),
 });
 
+const totalRecipients = parseInt(Deno.env.get("RECIPIENTS") ?? "100");
 const recipients: Recipient[] = [];
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < totalRecipients; i++) {
   recipients.push({
     id: new URL(`http://localhost:3000/users/${i}`),
     inboxId: new URL(`http://localhost:3000/users/${i}/inbox`),
   });
 }
 
-const total = parseInt(Deno.env.get("TOTAL") ?? "5000");
+const total = parseInt(Deno.env.get("TOTAL") ?? "500");
 const started = Date.now();
 for (let i = 0; i < total; i++) {
   await ctx.sendActivity(
@@ -37,7 +38,10 @@ for (let i = 0; i < total; i++) {
       id: new URL(`http://localhost:8000/activities/${i + 1}`),
     }),
   );
-  logger.info("Activity {index}/{total}", { index: i + 1, total });
+  logger.info(
+    "Activity {index}/{total} * {recipients}",
+    { index: i + 1, total, recipients: recipients.length },
+  );
 }
 
 const elapsed = Date.now() - started;

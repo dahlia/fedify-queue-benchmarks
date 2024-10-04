@@ -27,19 +27,19 @@ federation
   })
   .setKeyPairsDispatcher(() => []);
 
-const total = parseInt(Deno.env.get("TOTAL") ?? "5000");
-let i = 0;
+const total = parseInt(Deno.env.get("TOTAL") ?? "500");
+const activities = new Set();
 let started: number | undefined;
 
 federation
   .setInboxListeners("/users/{identifier}/inbox", "/inbox")
-  .on(Activity, () => {
-    if (i < 1) {
+  .on(Activity, (_, activity) => {
+    if (activities.size < 1) {
       started = Date.now();
       logger.info("Received first activity.");
     }
-    i++;
-    if (i >= total) {
+    activities.add(activity.id?.href);
+    if (activities.size >= total) {
       const elapsed = Date.now() - started!;
       logger.info("All activities received; elapsed: {elapsed}s", {
         elapsed: elapsed / 1000,

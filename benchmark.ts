@@ -2,6 +2,7 @@ import $, { KillSignal, KillSignalController } from "@david/dax";
 import { getLogger } from "@logtape/logtape";
 import { delay } from "@std/async";
 import { exists } from "@std/fs/exists";
+import Redis from "ioredis";
 import { markdownTable } from "markdown-table";
 import "./logging.ts";
 
@@ -92,93 +93,49 @@ async function run(env: Record<string, string> = {}): Promise<BenchResult> {
   return { clientElapsed, serverElapsed };
 }
 
-const logger = getLogger("bench");
-
-logger.info("No queue:");
-const noQueue = await run({ NO_QUEUE: "1" });
-logger.info("InProcessMessageQueue:");
-const inProcess = await run({ IN_PROCESS: "1" });
-logger.info("DenoKvMessageQueue:");
-const denoKv = await run();
-logger.info("RedisMessageQueue:");
-const redis = await run({ REDIS_URL: "redis://localhost:6379" });
-logger.info("PostgresMessageQueue:");
-const pg = await run({ PG_URL: "postgresql://localhost:5432/fedify_bench" });
-logger.info("InProcessMessageQueue × 4:");
-const inProcessP = await run({ IN_PROCESS: "1", PARALLEL: "4" });
-logger.info("DenoKvMessageQueue × 4:");
-const denoKvP = await run({ PARALLEL: "4" });
-logger.info("RedisMessageQueue × 4:");
-const redisP = await run({
-  REDIS_URL: "redis://localhost:6379",
-  PARALLEL: "4",
-});
-logger.info("PostgresMessageQueue × 4:");
-const pgP = await run({
-  PG_URL: "postgresql://localhost:5432/fedify_bench",
-  PARALLEL: "4",
-});
-
-logger.info("Bench result: {result}", {
-  result: {
-    noQueue,
-    inProcess,
-    denoKv,
-    redis,
-    pg,
-    inProcessP,
-    denoKvP,
-    redisP,
-    pgP,
+const benchmarks: Record<string, Record<string, string>> = {
+  "No queue": { NO_QUEUE: "1" },
+  InProcessMessageQueue: { IN_PROCESS: "1" },
+  DenoKvMessageQueue: {},
+  RedisMessageQueue: { REDIS_URL: "redis://localhost:6379" },
+  PostgresMessageQueue: { PG_URL: "postgresql://localhost:5432/fedify_bench" },
+  "InProcessMessageQueue × 4[^3]": { IN_PROCESS: "1", PARALLEL: "4" },
+  "DenoKvMessageQueue × 4[^3]": { PARALLEL: "4" },
+  "RedisMessageQueue × 4[^3]": {
+    REDIS_URL: "redis://localhost:6379",
+    PARALLEL: "4",
   },
-});
+  "PostgresMessageQueue × 4[^3]": {
+    PG_URL: "postgresql://localhost:5432/fedify_bench",
+    PARALLEL: "4",
+  },
+};
+
+const logger = getLogger("bench");
+let cachedResults: Record<string, BenchResult> = {};
+try {
+  cachedResults = JSON.parse(await Deno.readTextFile(".bench-cache.json"));
+} catch {
+  // Ignore
+}
+for (const [name, env] of Object.entries(benchmarks)) {
+  logger.info("Running benchmark: {name}", { name });
+  if (cachedResults[name] != null) {
+    logger.info("The result is cached; skipping...");
+    continue;
+  }
+  cachedResults[name] = await run(env);
+  await Deno.writeTextFile(".bench-cache.json", JSON.stringify(cachedResults));
+}
 
 const table = markdownTable([
   ["Driver", "Time taken to send[^1]", "Time taken to receive[^2]"],
-  [
-    "No queue",
-    noQueue.clientElapsed.toString(),
-    noQueue.serverElapsed.toString(),
-  ],
-  [
-    "`InProcessMessageQueue`",
-    inProcess.clientElapsed.toString(),
-    inProcess.serverElapsed.toString(),
-  ],
-  [
-    "`DenoKvMessageQueue`",
-    denoKv.clientElapsed.toString(),
-    denoKv.serverElapsed.toString(),
-  ],
-  [
-    "`RedisMessageQueue`",
-    redis.clientElapsed.toString(),
-    redis.serverElapsed.toString(),
-  ],
-  [
-    "`PostgresMessageQueue`",
-    pg.clientElapsed.toString(),
-    pg.serverElapsed.toString(),
-  ],
-  [
-    "`InProcessMessageQueue` × 4[^3]",
-    inProcessP.clientElapsed.toString(),
-    inProcessP.serverElapsed.toString(),
-  ],
-  [
-    "`DenoKvMessageQueue` × 4[^3]",
-    denoKvP.clientElapsed.toString(),
-    denoKvP.serverElapsed.toString(),
-  ],
-  [
-    "`RedisMessageQueue` × 4[^3]",
-    redisP.clientElapsed.toString(),
-    redisP.serverElapsed.toString(),
-  ],
-  [
-    "`PostgresMessageQueue` × 4[^3]",
-    pgP.clientElapsed.toString(),
-    pgP.serverElapsed.toString(),
-  ],
-]);
+  ...Object.entries(cachedResults).map((
+    [name, { clientElapsed, serverElapsed }],
+  ) => [
+    name,
+    `${clientElapsed.toFixed(2)}s`,
+    `${serverElapsed.toFixed(2)}s`,
+  ]),
+], { align: ["", "r", "r"] });
 console.log(table);
