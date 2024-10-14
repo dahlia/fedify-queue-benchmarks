@@ -15,12 +15,21 @@ The benchmarks measure the time taken to process a batch of sending 500
 activities to 100 recipients for each, which results in 50,000 messages
 in total.
 
+> [!NOTE]
+> The benchmarks intentionally do not use the [shared inbox delivery].
+> In the real-world applications, you would use the shared inbox delivery
+> so that the messages are delivered only once to each server for multiple
+> recipients, which results in much better performance.  The benchmarks
+> are designed to measure the worst-case performance of the message queue
+> system.
+
 [Fedify]: https://fedify.dev/
 [`InProcessMessageQueue`]: https://fedify.dev/manual/mq#inprocessmessagequeue
 [`DenoKvMessageQueue`]: https://fedify.dev/manual/mq#denokvmessagequeue-deno-only
 [`RedisMessageQueue`]: https://fedify.dev/manual/mq#redismessagequeue
 [`PostgresMessageQueue`]: https://fedify.dev/manual/mq#postgresmessagequeue
 [`AmqpMessageQueue`]: https://unstable.fedify.dev/manual/mq#amqpmessagequeue
+[shared inbox delivery]: https://www.w3.org/TR/activitypub/#shared-inbox-delivery
 
 
 Results
