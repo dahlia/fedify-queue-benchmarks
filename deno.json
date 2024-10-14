@@ -1,12 +1,14 @@
 {
   "imports": {
     "@david/dax": "jsr:@david/dax@^0.42.0",
+    "@fedify/amqp": "jsr:@fedify/amqp@^0.1.0",
     "@fedify/fedify": "jsr:@fedify/fedify@^1.0.2",
     "@fedify/postgres": "jsr:@fedify/postgres@^0.1.0",
     "@fedify/redis": "jsr:@fedify/redis@^0.3.0",
     "@logtape/logtape": "jsr:@logtape/logtape@^0.6.3",
     "@std/async": "jsr:@std/async@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.4",
+    "amqplib": "npm:amqplib@^0.10.4",
     "ioredis": "npm:ioredis@^5.4.1",
     "markdown-table": "https://esm.sh/markdown-table@3.0.3",
     "postgres": "npm:postgres@^3.4.4"

@@ -9,6 +9,7 @@ This repository contains benchmarks for the outbox queue implementations in
  -  [`DenoKvMessageQueue`]
  -  [`RedisMessageQueue`]
  -  [`PostgresMessageQueue`]
+ -  [`AmqpMessageQueue`]
 
 The benchmarks measure the time taken to process a batch of sending 500
 activities to 100 recipients for each, which results in 50,000 messages
@@ -19,24 +20,27 @@ in total.
 [`DenoKvMessageQueue`]: https://fedify.dev/manual/mq#denokvmessagequeue-deno-only
 [`RedisMessageQueue`]: https://fedify.dev/manual/mq#redismessagequeue
 [`PostgresMessageQueue`]: https://fedify.dev/manual/mq#postgresmessagequeue
+[`AmqpMessageQueue`]: https://unstable.fedify.dev/manual/mq#amqpmessagequeue
 
 
 Results
 -------
 
-Last update: October 4, 2024.
+Last update: October 14, 2024.
 
 | Driver                            | Time taken to send[^1] | Time taken to receive[^2] |
 | --------------------------------- | ---------------------: | ------------------------: |
-| No queue                          | 214.39s                | 213.78s                   |
-| [`InProcessMessageQueue`]         | 5.65s                  | 612.10s                   |
-| [`DenoKvMessageQueue`]            | 7.04s                  | 1040.82s                  |
-| [`RedisMessageQueue`]             | 7.29s                  | 971.46s                   |
-| [`PostgresMessageQueue`]          | 12.18s                 | 800.47s                   |
-| [`InProcessMessageQueue`] × 4[^3] | 6.02s                  | 239.56s                   |
-| [`DenoKvMessageQueue`] × 4[^3]    | 6.96s                  | 949.76s                   |
-| [`RedisMessageQueue`] × 4[^3]     | 7.40s                  | 1969.19s                  |
-| [`PostgresMessageQueue`] × 4[^3]  | 11.46s                 | 266.86s                   |
+| No queue                          |                214.39s |                   213.78s |
+| [`InProcessMessageQueue`]         |                  5.65s |                   612.10s |
+| [`DenoKvMessageQueue`]            |                  7.04s |                  1040.82s |
+| [`RedisMessageQueue`]             |                  7.29s |                   971.46s |
+| [`PostgresMessageQueue`]          |                 12.18s |                   800.47s |
+| [`AmqpMessageQueue`]              |                  7.15s |                   715.38s |
+| [`InProcessMessageQueue`] × 4[^3] |                  6.02s |                   239.56s |
+| [`DenoKvMessageQueue`] × 4[^3]    |                  6.96s |                   949.76s |
+| [`RedisMessageQueue`] × 4[^3]     |                  7.40s |                  1969.19s |
+| [`PostgresMessageQueue`] × 4[^3]  |                 11.46s |                   266.86s |
+| [`AmqpMessageQueue`] × 4[^3]      |                  7.61s |                   245.59s |
 
 No queue means that the entire process is done synchronously without any
 message queue, hence it has the slowest response time.  However, if you want
@@ -48,10 +52,11 @@ the best response time, you may consider using [`DenoKvMessageQueue`] on Deno,
 or [`RedisMessageQueue`] (which is usable on Node.js, Bun, and Deno).
 
 If you care about the response time but still want the best throughput, you may
-consider using [`PostgresMessageQueue`] with [`ParallelMessageQueue`].
-This setup has the slowest response time among the persistent message queues,
-but it is still much faster than the synchronous process (no queue),
-and it has the best throughput among the persistent message queues.
+consider using [`AmqpMessageQueue`] or [`PostgresMessageQueue`] with
+[`ParallelMessageQueue`].  Those setups have the slowest response time among
+the persistent message queues, but they are still much faster than
+the synchronous process (no queue), and have the best throughput among
+the persistent message queues.
 
 There are some curious results in the benchmarks.  For example, the throughput
 of [`RedisMessageQueue`] is much worse when it is used with
@@ -90,14 +95,17 @@ Software
 
 The software versions used in the benchmarks are:
 
- -  Deno 1.46.3
+ -  Deno 2.0.0
  -  Redis 7.2.5
  -  PostgreSQL 16.1
+ -  RabbitMQ 4.0.2
  -  [`jsr:@fedify/fedify` 1.0.2](https://github.com/dahlia/fedify/tree/1.0.2)
  -  [`jsr:@fedify/redis` 0.3.0](https://github.com/dahlia/fedify-redis/tree/0.3.0)
  -  [`jsr:@fedify/postgres` 0.1.0](https://github.com/dahlia/fedify-postgres/tree/0.1.0)
+ -  [`jsr:@fedify/amqp` 0.1.0](https://github.com/dahlia/fedify-amqp/tree/0.1.0)
  -  [`npm:ioredis` 5.4.1](https://github.com/redis/ioredis/tree/v5.4.1)
  -  [`npm:postgres` 3.4.4](https://github.com/porsager/postgres/tree/v3.4.4)
+ -  [`npm:amqplib` 0.10.4](https://github.com/amqp-node/amqplib/tree/v0.10.4)
 
 
 How to run the benchmarks on your machine
@@ -110,10 +118,12 @@ You need to have the following software installed:
  -  [Deno]
  -  [Redis]
  -  [PostgreSQL]
+ -  [RabbitMQ]
 
 [Deno]: https://deno.land/
 [Redis]: https://redis.io/
 [PostgreSQL]: https://www.postgresql.org/
+[RabbitMQ]: https://www.rabbitmq.com/
 
 ### Redis
 
@@ -127,6 +137,10 @@ database URL:
 ~~~~
 postgresql://localhost:5432/fedify_bench
 ~~~~
+
+### RabbitMQ
+
+You need to have a RabbitMQ server running on `localhost:5672`.
 
 ### Run the benchmarks
 

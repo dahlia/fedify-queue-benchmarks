@@ -99,6 +99,7 @@ const benchmarks: Record<string, Record<string, string>> = {
   DenoKvMessageQueue: {},
   RedisMessageQueue: { REDIS_URL: "redis://localhost:6379" },
   PostgresMessageQueue: { PG_URL: "postgresql://localhost:5432/fedify_bench" },
+  AmqpMessageQueue: { AMQP_URL: "amqp://localhost:5672" },
   "InProcessMessageQueue × 4[^3]": { IN_PROCESS: "1", PARALLEL: "4" },
   "DenoKvMessageQueue × 4[^3]": { PARALLEL: "4" },
   "RedisMessageQueue × 4[^3]": {
@@ -107,6 +108,10 @@ const benchmarks: Record<string, Record<string, string>> = {
   },
   "PostgresMessageQueue × 4[^3]": {
     PG_URL: "postgresql://localhost:5432/fedify_bench",
+    PARALLEL: "4",
+  },
+  "AmqpMessageQueue × 4[^3]": {
+    AMQP_URL: "amqp://localhost:5672",
     PARALLEL: "4",
   },
 };

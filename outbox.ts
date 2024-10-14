@@ -1,3 +1,4 @@
+import { AmqpMessageQueue } from "@fedify/amqp";
 import {
   createFederation,
   importJwk,
@@ -9,6 +10,8 @@ import {
 import { DenoKvMessageQueue, DenoKvStore } from "@fedify/fedify/x/denokv";
 import { PostgresMessageQueue } from "@fedify/postgres";
 import { RedisMessageQueue } from "@fedify/redis";
+// @deno-types="npm:@types/amqplib@^0.10.5"
+import amqplib from "amqplib";
 import { Redis } from "ioredis";
 import postgres from "postgres";
 import "./logging.ts";
@@ -18,6 +21,7 @@ const noQueue = Deno.env.get("NO_QUEUE") === "1";
 const inProcess = Deno.env.get("IN_PROCESS") === "1";
 const redisUrl = Deno.env.get("REDIS_URL");
 const pgUrl = Deno.env.get("PG_URL");
+const amqpUrl = Deno.env.get("AMQP_URL");
 const kv = await Deno.openKv(Deno.env.get("KV"));
 
 export let queue: MessageQueue | undefined;
@@ -34,6 +38,9 @@ if (noQueue) {
 } else if (pgUrl != null) {
   const pg = postgres(pgUrl);
   queue = new PostgresMessageQueue(pg);
+} else if (amqpUrl != null) {
+  const amqp = await amqplib.connect(amqpUrl);
+  queue = new AmqpMessageQueue(amqp);
 } else {
   queue = new DenoKvMessageQueue(kv);
 }
